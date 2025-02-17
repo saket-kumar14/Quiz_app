@@ -105,3 +105,28 @@ class SubjectAPI(Resource):
         db.session.commit()
         return{'message': 'Subject Created'}, 201
     
+    @jwt_required()
+    def put(self, subject_id):
+        if get_jwt().get('role') != 'admin':
+            return {'error': 'Only admin can create subjects'}, 401
+
+        data = request.json
+        if not (data.get('name') and data.get('description')):
+            return {'error': 'All fields are required'}, 400
+        
+        if not (2 <= len(data.get('name').strip()) <= 50):
+            return {'error': 'Name should be between 2-50 characters'}, 400
+        
+        if not (2 <= len(data.get('description').strip()) <= 255):
+            return {'error': 'Description should be between 2-255 characters'}, 400
+        
+        subject = Subject.query.filter_by(id=subject_id)
+        if not subject:
+            return {'error': 'Subject does not exist'}, 404
+        
+        subject.name=data.get('name').strip()
+        subject.description=data.get('description').strip()
+
+        db.session.commit()
+        return{'message': 'Subject updated successfully'}, 200
+    
